@@ -3,6 +3,7 @@ import React, { useState, useCallback, ChangeEvent } from 'react';
 import { CaptionAndHashtags, ImageFile } from '../types';
 import { generateCaptionAndHashtags } from '../services/geminiService';
 import { UploadIcon, SparklesIcon, CopyIcon, CheckIcon, LoadingSpinner, TrashIcon } from './icons';
+import ApiKeyGuide from './ApiKeyGuide';
 
 const CaptionGenerator: React.FC = () => {
   const [productType, setProductType] = useState<string>('');
@@ -16,6 +17,7 @@ const CaptionGenerator: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [copiedItem, setCopiedItem] = useState<string | null>(null);
+  const [showApiKeyGuide, setShowApiKeyGuide] = useState<boolean>(false);
 
   const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -62,6 +64,7 @@ const CaptionGenerator: React.FC = () => {
     setError(null);
     setResult(null);
     setCopiedItem(null);
+    setShowApiKeyGuide(false);
 
     try {
       const descText = descriptionInputMethod === 'text' ? productDescription : undefined;
@@ -76,7 +79,14 @@ const CaptionGenerator: React.FC = () => {
         );
       setResult(generatedResult);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Terjadi kesalahan tidak diketahui.');
+        const errorMessage = err instanceof Error ? err.message : 'Terjadi kesalahan tidak diketahui.';
+        if (errorMessage.includes('API Key tidak ditemukan')) {
+            setShowApiKeyGuide(true);
+            setError(null);
+        } else {
+            setError(errorMessage);
+            setShowApiKeyGuide(false);
+        }
     } finally {
       setIsLoading(false);
     }
@@ -242,7 +252,9 @@ const CaptionGenerator: React.FC = () => {
         <div className="bg-slate-800 p-6 sm:p-8 rounded-2xl shadow-lg border border-slate-700 flex flex-col">
             <h2 className="text-2xl font-bold text-white mb-4">HASIL</h2>
             <div className="flex-grow flex items-center justify-center">
-            {isLoading ? (
+            { showApiKeyGuide ? (
+                <ApiKeyGuide />
+            ) : isLoading ? (
                 <div className="text-center text-slate-400">
                     <LoadingSpinner className="w-12 h-12 mx-auto mb-4"/>
                     <p>AI sedang meracik kata-kata...</p>

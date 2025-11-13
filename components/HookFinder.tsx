@@ -1,7 +1,9 @@
+
 import React, { useState, useCallback } from 'react';
 import { generateProductHooks } from '../services/geminiService';
 import { ProductHooks } from '../types';
 import { SparklesIcon, CopyIcon, CheckIcon, LoadingSpinner } from './icons';
+import ApiKeyGuide from './ApiKeyGuide';
 
 const HookFinder: React.FC = () => {
     const [productName, setProductName] = useState('');
@@ -13,6 +15,7 @@ const HookFinder: React.FC = () => {
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
     const [copiedItem, setCopiedItem] = useState<number | null>(null);
+    const [showApiKeyGuide, setShowApiKeyGuide] = useState<boolean>(false);
 
     const handleSubmit = useCallback(async (e: React.FormEvent) => {
         e.preventDefault();
@@ -24,12 +27,20 @@ const HookFinder: React.FC = () => {
         setError(null);
         setResult(null);
         setCopiedItem(null);
+        setShowApiKeyGuide(false);
 
         try {
             const generatedResult = await generateProductHooks(productName, targetAudience, features, hookReference);
             setResult(generatedResult);
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Terjadi kesalahan tidak diketahui.');
+            const errorMessage = err instanceof Error ? err.message : 'Terjadi kesalahan tidak diketahui.';
+            if (errorMessage.includes('API Key tidak ditemukan')) {
+                setShowApiKeyGuide(true);
+                setError(null);
+            } else {
+                setError(errorMessage);
+                setShowApiKeyGuide(false);
+            }
         } finally {
             setIsLoading(false);
         }
@@ -125,7 +136,9 @@ const HookFinder: React.FC = () => {
             <div className="bg-slate-800 p-6 sm:p-8 rounded-2xl shadow-lg border border-slate-700 flex flex-col">
                 <h2 className="text-2xl font-bold text-white mb-4">HASIL HOOK</h2>
                 <div className="flex-grow flex items-center justify-center">
-                    {isLoading ? (
+                    { showApiKeyGuide ? (
+                        <ApiKeyGuide />
+                    ) : isLoading ? (
                         <div className="text-center text-slate-400">
                             <LoadingSpinner className="w-12 h-12 mx-auto mb-4"/>
                             <p>AI sedang mencari ide-ide cemerlang...</p>
