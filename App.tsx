@@ -3,11 +3,15 @@ import React, { useState } from 'react';
 import CaptionGenerator from './components/CaptionGenerator';
 import HookFinder from './components/HookFinder';
 import { SparklesIcon } from './components/icons';
+import ApiKeyMissing from './components/ApiKeyMissing';
 
 type Page = 'caption' | 'hook';
 
 const App: React.FC = () => {
     const [activePage, setActivePage] = useState<Page>('caption');
+
+    // Memeriksa apakah API_KEY ada dan tidak kosong di environment
+    const apiKeyExists = process.env.API_KEY && process.env.API_KEY.length > 0;
 
     const NavButton = ({ page, label }: { page: Page; label: string }) => (
         <button
@@ -35,15 +39,21 @@ const App: React.FC = () => {
                     </p>
                 </header>
                 
-                <nav className="flex justify-center gap-4 mb-8" aria-label="Main navigation">
-                    <NavButton page="caption" label="Generator Caption" />
-                    <NavButton page="hook" label="Pencari Hook Produk" />
-                </nav>
+                {apiKeyExists ? (
+                    <>
+                        <nav className="flex justify-center gap-4 mb-8" aria-label="Main navigation">
+                            <NavButton page="caption" label="Generator Caption" />
+                            <NavButton page="hook" label="Pencari Hook Produk" />
+                        </nav>
 
-                <main>
-                    {activePage === 'caption' && <CaptionGenerator />}
-                    {activePage === 'hook' && <HookFinder />}
-                </main>
+                        <main>
+                            {activePage === 'caption' && <CaptionGenerator />}
+                            {activePage === 'hook' && <HookFinder />}
+                        </main>
+                    </>
+                ) : (
+                    <ApiKeyMissing />
+                )}
             </div>
         </div>
     );
